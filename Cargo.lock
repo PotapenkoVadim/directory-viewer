@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "view-directory"
+name = "directory-viewer"
 version = "0.1.0"
