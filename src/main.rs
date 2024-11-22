@@ -1,38 +1,33 @@
 use std::{fs, env, io::ErrorKind};
 
 fn main() {
-    let args: Vec<String> = env::args()
+    let result = env::args()
         .skip(1)
-        .collect();
+        .collect::<Vec<String>>()
+        .first()
+        .map_or_else(|| {Some("./")}, |p| {Some(p)})
+        .map(|path| {
+            fs::metadata(path).map_or_else(|err| {
+                if err.kind() == ErrorKind::NotFound {"WARNING: The path does not exist".to_string()}
+                else {panic!("Unexpected error: {:?}", err);}
+            }, |_| {
+                let mut directories: Vec<String> = Vec::new();
+                let paths = fs::read_dir(path).unwrap();
 
-    let verifiable_path = match args.first() {
-        Some(path) => path,
-        None => "./"
-    };
+                for path in paths {
+                    let document = path
+                        .unwrap()
+                        .file_name()
+                        .into_string()
+                        .unwrap();
+    
+                    directories.push(document);
+                }
 
-    match fs::metadata(verifiable_path) {
-        Ok(_) => {
-            let mut directories: Vec<String> = Vec::new();
-            let paths = fs::read_dir(verifiable_path).unwrap();
+                format!("{}", directories.join("   "))
+            })
+        })
+        .unwrap();
 
-            for path in paths {
-                let document = path
-                    .unwrap()
-                    .file_name()
-                    .into_string()
-                    .unwrap();
-
-                directories.push(document);
-            }
-
-            println!("{}", directories.join("   "));
-        },
-        Err(e) => {
-            if e.kind() == ErrorKind::NotFound {
-                println!("WARNING: The path does not exist");
-            } else {
-                panic!("Unexpected error: {:?}", e);
-            }
-        }
-    }
+    println!("{}", result);
 }
